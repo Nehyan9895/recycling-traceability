@@ -29,9 +29,6 @@ button { font: inherit; }
 .brand-sub { font-size: 12px; color: var(--on-dark-muted); }
 .top-right { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .batch-chip { font-family: var(--mono); font-size: 13px; padding: 6px 10px; border: 1px solid #3a4842; border-radius: 6px; }
-.mode { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--on-dark-muted); }
-.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); animation: pulse 1.4s infinite; }
-.mode[data-paused] .live-dot { animation: none; opacity: .4; }
 
 /* Layout */
 .shell { display: flex; flex-wrap: wrap; gap: 24px; padding: 24px 28px; max-width: 1440px; margin: 0 auto; }
@@ -71,8 +68,9 @@ button { font: inherit; }
 .btn-dark { background: var(--ink); border-color: var(--ink); color: #fff; }
 .btn-dark:hover { background: var(--slate-2); }
 .btn-amber { background: var(--amber); border-color: var(--amber); }
-.progress { margin: 14px 12px 0; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
-.progress > div { height: 4px; width: 0; background: var(--amber); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn:disabled:hover { border-color: #c6cec9; }
+.btn-dark:disabled:hover { background: var(--ink); border-color: var(--ink); }
 
 /* Panels */
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 28px; }
@@ -152,7 +150,6 @@ button { font: inherit; }
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes pop { 0% { opacity: 0; transform: scale(.6); } 70% { transform: scale(1.06); } 100% { opacity: 1; transform: scale(1); } }
 @keyframes truck { from { transform: translateX(-120px); } to { transform: translateX(0); } }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 
 @media (max-width: 720px) {
   .shell { padding: 16px; }

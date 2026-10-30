@@ -19,7 +19,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
     </div>
     <div class="top-right">
       <span class="batch-chip">BATCH {batch.id}</span>
-      <span class="mode" id="mode"><span class="live-dot"></span><span id="mode-label">Live demo running</span></span>
     </div>
   </header>
 
@@ -36,11 +35,9 @@ const pad = (n: number) => String(n).padStart(2, '0');
         </button>
       ))}
       <div class="controls">
-        <button class="btn" id="prev" aria-label="Previous stage">←</button>
-        <button class="btn btn-dark" id="toggle">Pause</button>
-        <button class="btn" id="next" aria-label="Next stage">→</button>
+        <button class="btn" id="prev">← Back</button>
+        <button class="btn btn-dark" id="next">Next stage →</button>
       </div>
-      <div class="progress" aria-hidden="true"><div id="progress"></div></div>
     </nav>
 
     <main class="main">

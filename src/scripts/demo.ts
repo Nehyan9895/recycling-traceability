@@ -1,7 +1,8 @@
-// Drives the auto-playing walkthrough of one batch through the plant.
+// Step-by-step walkthrough of one batch through the plant.
+// Stages change only when the presenter clicks; each stage animates once on entry.
 
 const TICK_MS = 100;
-const STAGE_TICKS = 70; // 7 seconds per stage
+const STAGE_TICKS = 50; // a stage's own animation finishes within 5 seconds
 const STAGES = 6;
 const NET_KG = 1000;
 const SOLD_KG = 975; // everything except residue sent to TSDF
@@ -15,10 +16,8 @@ export function initDemo() {
 
   const steps = $$<HTMLButtonElement>('.step');
   const panels = $$<HTMLElement>('.stage');
-  const toggleBtn = $<HTMLButtonElement>('#toggle');
-  const mode = $('#mode');
-  const modeLabel = $('#mode-label');
-  const progress = $('#progress');
+  const prevBtn = $<HTMLButtonElement>('#prev');
+  const nextBtn = $<HTMLButtonElement>('#next');
   const fracs = $$<HTMLElement>('.frac');
   const driveStatus = $$<HTMLElement>('.drive-status');
   const saleStatus = $$<HTMLElement>('.sale-status');
@@ -26,7 +25,7 @@ export function initDemo() {
 
   let step = 0;
   let t = 0;
-  let playing = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function showStage(i: number) {
     panels.forEach((p) => {
@@ -49,16 +48,12 @@ export function initDemo() {
 
   function go(i: number) {
     step = Math.max(0, Math.min(STAGES - 1, i));
-    t = 0;
+    t = reduced ? STAGE_TICKS : 0;
     showStage(step);
+    prevBtn.disabled = step === 0;
+    nextBtn.disabled = step === STAGES - 1;
+    nextBtn.textContent = step === STAGES - 1 ? 'Last stage' : 'Next stage →';
     render();
-  }
-
-  function setPlaying(p: boolean) {
-    playing = p;
-    toggleBtn.textContent = p ? 'Pause' : 'Play';
-    modeLabel.textContent = p ? 'Live demo running' : 'Demo paused';
-    mode.toggleAttribute('data-paused', !p);
   }
 
   function render() {
@@ -114,36 +109,21 @@ export function initDemo() {
     $('#bal-out').style.width = `${sold / 10}%`;
     $('#bal-out-kg').textContent = fmt(sold);
 
-    progress.style.width = `${(t / STAGE_TICKS) * 100}%`;
   }
 
   steps.forEach((s, i) => s.addEventListener('click', () => go(i)));
-  $('#prev').addEventListener('click', () => go(step - 1));
-  $('#next').addEventListener('click', () => go(step + 1));
-  toggleBtn.addEventListener('click', () => {
-    if (!playing && step === STAGES - 1 && t >= STAGE_TICKS) go(0);
-    setPlaying(!playing);
-  });
+  prevBtn.addEventListener('click', () => go(step - 1));
+  nextBtn.addEventListener('click', () => go(step + 1));
   exportBtn.addEventListener('click', () => {
     exportBtn.textContent = 'Filing pack exported ✓';
   });
 
+  // Run the current stage's animation, then hold until the presenter moves on.
   setInterval(() => {
-    if (!playing) return;
-    if (t + 1 >= STAGE_TICKS) {
-      if (step >= STAGES - 1) {
-        t = STAGE_TICKS;
-        render();
-        setPlaying(false);
-        return;
-      }
-      go(step + 1);
-      return;
-    }
+    if (t >= STAGE_TICKS) return;
     t += 1;
     render();
   }, TICK_MS);
 
-  setPlaying(playing);
   go(0);
 }
