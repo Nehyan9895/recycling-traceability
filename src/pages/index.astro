@@ -1,0 +1,193 @@
+---
+import Base from '../layouts/Base.astro';
+import { brand, batch, stages, fractions, tagLog, drives, sales, checks, qrPattern } from '../data/batch';
+
+const maxFrac = Math.max(...fractions.map((f) => f.kg));
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+<Base
+  title={`${brand.name} · Batch ${batch.id}`}
+  description="Interactive prototype: one batch of e-waste traced from weigh-in to EPR filing."
+>
+  <header class="topbar">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="6" fill="none" stroke="#F2B33D" stroke-width="2"></rect><path d="M8 20 L13 10 L17 17 L22 9" fill="none" stroke="#F2B33D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      <div>
+        <div class="brand-name">{brand.name}</div>
+        <div class="brand-sub">{brand.plant}</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <span class="batch-chip">BATCH {batch.id}</span>
+      <span class="mode" id="mode"><span class="live-dot"></span><span id="mode-label">Live demo running</span></span>
+    </div>
+  </header>
+
+  <div class="shell">
+    <nav class="rail" aria-label="Batch stages">
+      <div class="eyebrow">BATCH JOURNEY</div>
+      {stages.map((s, i) => (
+        <button class="step" data-step={i} aria-label={`Stage ${i + 1}: ${s.label}`}>
+          <span class="dot" data-mark={pad(i + 1)}>{pad(i + 1)}</span>
+          <span class="step-text">
+            <span class="step-label">{s.label}</span>
+            <span class="step-sub">{s.sub}</span>
+          </span>
+        </button>
+      ))}
+      <div class="controls">
+        <button class="btn" id="prev" aria-label="Previous stage">←</button>
+        <button class="btn btn-dark" id="toggle">Pause</button>
+        <button class="btn" id="next" aria-label="Next stage">→</button>
+      </div>
+      <div class="progress" aria-hidden="true"><div id="progress"></div></div>
+    </nav>
+
+    <main class="main">
+      <!-- 01 Weigh-in -->
+      <section class="panel stage" data-stage="0">
+        <div class="eyebrow in-1">STAGE 01 · WEIGH-IN</div>
+        <h1 class="in-1">Material received at the gate</h1>
+        <p class="lede in-1">The weighbridge reading is captured directly. Nobody types the weight by hand.</p>
+        <div class="split">
+          <div class="scale in-1">
+            <div class="scale-label">WEIGHBRIDGE WB-1 · LIVE</div>
+            <div class="scale-reading"><span id="net">0</span><small> kg net</small></div>
+            <div class="scale-meta"><span>Gross <span id="gross">{batch.tareKg.toLocaleString('en-IN')}</span> kg</span><span>Tare {batch.tareKg.toLocaleString('en-IN')} kg</span></div>
+            <svg class="truck" width="180" height="56" viewBox="0 0 180 56" aria-hidden="true"><rect x="2" y="10" width="104" height="32" rx="3" fill="#2E3D36" stroke="#F2B33D" stroke-width="1.5"></rect><path d="M108 20 H140 L156 32 V42 H108 Z" fill="#2E3D36" stroke="#F2B33D" stroke-width="1.5"></path><circle cx="30" cy="46" r="7" fill="#15201B" stroke="#F2B33D" stroke-width="1.5"></circle><circle cx="136" cy="46" r="7" fill="#15201B" stroke="#F2B33D" stroke-width="1.5"></circle><line x1="0" y1="54" x2="180" y2="54" stroke="#3A4842" stroke-width="2"></line></svg>
+          </div>
+          <div class="cards in-2">
+            <div class="card"><div class="card-k">Supplier</div><div class="card-v">{batch.supplier}</div><div class="card-n">Bulk consumer · GSTIN verified</div></div>
+            <div class="card"><div class="card-k">Contents declared</div><div class="card-v">{batch.contents}</div><div class="card-n">Vehicle {batch.vehicle} · 4 photos attached</div></div>
+            <div class="card card-row"><span>Weigh slip</span><span class="mono ok" id="slip">Reading…</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 02 Tagging -->
+      <section class="panel stage" data-stage="1" hidden>
+        <div class="eyebrow in-1">STAGE 02 · TAGGING</div>
+        <h1 class="in-1">One code follows the batch everywhere</h1>
+        <p class="lede in-1">Every scan after this links work, weights and sales back to the same intake.</p>
+        <div class="split" style="align-items: center; gap: 32px">
+          <div class="label-card">
+            <div class="qr" role="img" aria-label={`Batch label for ${batch.id}`}>
+              {qrPattern.split('').map((c) => <span class={c === '1' ? 'on' : ''}></span>)}
+            </div>
+            <div class="label-id">{batch.id}</div>
+          </div>
+          <div class="log in-2">
+            {tagLog.map((l) => (
+              <div class="log-row"><span class="mono">{l.t}</span><span>{l.e}</span></div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- 03 Dismantling -->
+      <section class="panel stage" data-stage="2" hidden>
+        <div class="eyebrow in-1">STAGE 03 · DISMANTLING</div>
+        <h1 class="in-1">Each material weighed as it leaves the line</h1>
+        <p class="lede in-1">Outputs must add back up to what came in. The system flags any gap before the batch can close.</p>
+        <div class="fracs">
+          {fractions.map((f) => (
+            <div class="frac" data-kg={f.kg}>
+              <span class="frac-name">{f.name}</span>
+              <div class="track"><div class="frac-bar" style={`background:${f.color}`} data-max={maxFrac}></div></div>
+              <span class="num"><span class="frac-kg">0</span> kg</span>
+            </div>
+          ))}
+        </div>
+        <div class="summary in-3">
+          <span>Accounted for: <strong><span id="sep">0</span> / {batch.netKg.toLocaleString('en-IN')} kg</strong></span>
+          <span id="balance-text" class="muted" style="font-weight: 600">Counting…</span>
+        </div>
+      </section>
+
+      <!-- 04 Data destruction -->
+      <section class="panel stage" data-stage="3" hidden>
+        <div class="eyebrow in-1">STAGE 04 · DATA DESTRUCTION</div>
+        <h1 class="in-1">Every drive logged by serial, then destroyed</h1>
+        <p class="lede in-1">The client gets a certificate listing each drive. This is what earns the trust of IT parks and banks.</p>
+        <div class="split" style="margin-top: 24px">
+          <div class="table-wrap in-2" style="flex: 2 1 340px; min-width: 0">
+            {drives.map((d) => (
+              <div class="drive"><span class="mono" style="font-size: 13px">{d.sn}</span><span class="muted">{d.kind}</span><span class="status drive-status">Queued</span></div>
+            ))}
+            <div class="muted" style="font-size: 13px; padding-top: 10px">Showing {drives.length} of 25 drives in this batch</div>
+          </div>
+          <div class="cert in-3">
+            <div class="eyebrow">CERTIFICATE</div>
+            <div class="cert-title">Data destruction</div>
+            <div class="mono" style="font-size: 13px">DD-2026-0412</div>
+            <div class="muted" style="font-size: 13px">Method: wipe and physical shred · Witnessed with video</div>
+            <div class="ok" style="font-size: 14px; font-weight: 600; margin-top: 6px" id="cert">In progress</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 05 Sales -->
+      <section class="panel stage" data-stage="4" hidden>
+        <div class="eyebrow in-1">STAGE 05 · SALES</div>
+        <h1 class="in-1">Sold only to registered buyers, with an e-invoice</h1>
+        <p class="lede in-1">The buyer's registration is checked before dispatch. Each invoice is tied back to this batch.</p>
+        <div class="table-wrap in-2">
+          <div class="sale-table">
+            <div class="sale head"><span>MATERIAL</span><span>WEIGHT</span><span>BUYER</span><span>E-INVOICE</span></div>
+            {sales.map((r, i) => (
+              <div class="sale">
+                <span style="font-weight: 500">{r.name}</span>
+                <span class="mono" style="font-size: 13px">{r.kg} kg</span>
+                <span class="muted">{r.buyer}</span>
+                <span class="mono status sale-status" style="font-size: 13px" data-irn={`IRN …${4471 + i * 13}`}>Pending</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- 06 EPR filing -->
+      <section class="panel stage" data-stage="5" hidden>
+        <div class="eyebrow in-1">STAGE 06 · EPR FILING</div>
+        <h1 class="in-1">The filing is assembled, not rebuilt from paper</h1>
+        <p class="lede in-1">Every check below already passed while the batch moved through the plant.</p>
+        <div class="split" style="margin-top: 24px">
+          <div class="in-2" style="flex: 2 1 340px">
+            {checks.map((c) => (
+              <div class="check">
+                <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#1F5C46"></circle><path d="M6 10.5 L9 13 L14 7.5" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                <span>{c}</span>
+              </div>
+            ))}
+          </div>
+          <div class="filing in-3">
+            <div class="eyebrow" style="color: var(--on-dark-muted)">READY FOR CPCB PORTAL</div>
+            <div class="filing-kg">{batch.netKg.toLocaleString('en-IN')} kg</div>
+            <div style="font-size: 13px; color: var(--on-dark-muted)">Processed, invoiced and balanced. Certificates can be sold to brands once credited.</div>
+            <button class="btn btn-amber" id="export">Export filing pack</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mass balance, always visible -->
+      <section class="panel" aria-label="Mass balance" style="padding: 20px 28px">
+        <div class="balance-head">
+          <h2>Mass balance · {batch.id}</h2>
+          <span class="muted" style="font-size: 13px">Every kg in must match every kg out</span>
+        </div>
+        <div class="bal-rows">
+          <div class="bal"><span class="muted" style="font-size: 13px">Received</span><div class="track"><div id="bal-in" style="background: var(--ink)"></div></div><span class="num"><span id="bal-in-kg">0</span> kg</span></div>
+          <div class="bal"><span class="muted" style="font-size: 13px">Separated</span><div class="track"><div id="bal-sep" style="background: var(--green)"></div></div><span class="num"><span id="bal-sep-kg">0</span> kg</span></div>
+          <div class="bal"><span class="muted" style="font-size: 13px">Sold / disposed</span><div class="track"><div id="bal-out" style="background: var(--amber)"></div></div><span class="num"><span id="bal-out-kg">0</span> kg</span></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <p class="footnote">Prototype with sample data. Names in brackets are placeholders.</p>
+
+  <script>
+    import { initDemo } from '../scripts/demo';
+    initDemo();
+  </script>
+</Base>
